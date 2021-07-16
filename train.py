@@ -52,8 +52,8 @@ def train(net, target_img, n_iters, save_path, validation_path=None):
 def inference(net, size):
     w, h = size
     with torch.no_grad():
-        coords = uniform_coordinates(w, h).cuda()
-        output = net(coords, (w, h))
+        coords = uniform_coordinates(h, w).cuda()
+        output = net(coords, (h, w))
 
     to_pil_image(output[0].cpu()).save('./for_fun.png')
 
