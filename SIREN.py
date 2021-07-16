@@ -101,7 +101,7 @@ class SirenNet(nn.Module):
         if out_size is not None:
             h, w = out_size
             out = rearrange(out, '(h w) c -> () c h w', h=h, w=w)
-            out = out.permute(1, 0).view(1, 3, h, w)
+            # out = out.permute(1, 0).view(1, 3, h, w)
 
 
         return postprocess(out)
