@@ -72,7 +72,7 @@ if __name__ == '__main__':
 
     else:
         net.load_state_dict(torch.load(save_path))
-        inference(net.cuda(), size=(w, h))
+        inference(net.cuda(), size=(h, w))
 
 
 
