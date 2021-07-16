@@ -28,10 +28,13 @@ class InputMapping:
             return torch.cat([torch.cos(x_proj), torch.sin(x_proj)], dim=-1)
 
 
-def uniform_coordinates(w, h):
-    coords = [torch.linspace(-1, 1, steps=h), torch.linspace(-1, 1, steps=w)]
+def uniform_coordinates(h, w, _range=(-1, 1), flatten=True):
+    _from, _to = _range(-1, 1)
+    coords = [torch.linspace(_from, _to, steps=h), torch.linspace(_from, _to, steps=w)]
     mgrid = torch.stack(torch.meshgrid(*coords), dim=-1)
-    mgrid = rearrange(mgrid, 'h w c -> (h w) c')
+    if flatten:
+        mgrid = rearrange(mgrid, 'h w c -> (h w) c')
+        # mgrid = mgrid.view(h, w, 2)
 
     return mgrid.detach()
 
@@ -95,8 +98,11 @@ class SirenNet(nn.Module):
 
     def forward(self, x=None, out_size=None):
         out = self.layers(x)
-        w, h = out_size
-        out = rearrange(out, '(h w) c -> () c h w', h=h, w=w)
+        if out_size is not None:
+            h, w = out_size
+            out = rearrange(out, '(h w) c -> () c h w', h=h, w=w)
+            out = out.permute(1, 0).view(1, 3, h, w)
+
 
         return postprocess(out)
 

@@ -24,8 +24,8 @@ def train(net, target_img, n_iters, save_path, validation_path=None):
 
     print('start training...')
     for i in range(n_iters):
-        coords = uniform_coordinates(w, h).cuda()
-        output = net(coords, (w, h))
+        coords = uniform_coordinates(h, w).cuda()
+        output = net(coords, (h, w))
         loss = mse_loss(output, img)
 
         optimizer.zero_grad()
@@ -36,14 +36,14 @@ def train(net, target_img, n_iters, save_path, validation_path=None):
             print(i + 1, loss.item())
 
             with torch.no_grad():
-                coords = uniform_coordinates(w, h).cuda()
-                output = net(coords, (w, h))
+                coords = uniform_coordinates(h, w).cuda()
+                output = net(coords, (h, w))
 
             to_pil_image(output[0].cpu()).save('{}/{}.png'.format(validation_path, i + 1))
             torch.save(net.state_dict(), save_path)
 
-    coords = uniform_coordinates(w, h).cuda()
-    output = net(coords, (w, h))
+    coords = uniform_coordinates(h, w).cuda()
+    output = net(coords, (h, w))
     to_pil_image(output[0].cpu()).save('{}/final.png'.format(validation_path))
 
     torch.save(net.state_dict(), save_path)
