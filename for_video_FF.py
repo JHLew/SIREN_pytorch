@@ -60,7 +60,7 @@ def inference(net, size):
 
 if __name__ == '__main__':
     is_train = True
-    net = SirenNet(dim_in=2, dim_hidden=256, dim_out=3, n_layers=5)
+    # net = SirenNet(dim_in=2, dim_hidden=256, dim_out=3, n_hidden_layers=5)
     img = Image.open('./examples/0002x4.png')
     w, h = img.size
     n_iters = 25000
