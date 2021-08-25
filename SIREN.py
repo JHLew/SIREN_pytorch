@@ -135,9 +135,9 @@ class MLP(nn.Module):
         super(MLP, self).__init__()
         self.num_layers = n_layers
         if fourier_dim is None:
-            self.use_fourier = True
-        else:
             self.use_fourier = False
+        else:
+            self.use_fourier = True
         if self.use_fourier:
             dim_in = fourier_dim * 2
         layers = []
