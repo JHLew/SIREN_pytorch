@@ -42,8 +42,9 @@ def train(net, target_img, n_iters, save_path, validation_path=None):
             to_pil_image(output[0].cpu()).save('{}/{}.png'.format(validation_path, i + 1))
             torch.save(net.state_dict(), save_path)
 
-    coords = uniform_coordinates(h, w).cuda()
-    output = net(coords, (h, w))
+    with torch.no_grad():
+        coords = uniform_coordinates(h, w).cuda()
+        output = net(coords, (h, w))
     to_pil_image(output[0].cpu()).save('{}/final.png'.format(validation_path))
 
     torch.save(net.state_dict(), save_path)

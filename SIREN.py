@@ -131,10 +131,13 @@ class SirenNet(nn.Module):
 
 
 class MLP(nn.Module):
-    def __init__(self, dim_in, dim_hidden, dim_out, n_layers, use_fourier=True, fourier_dim=256):
+    def __init__(self, dim_in, dim_hidden, dim_out, n_layers, fourier_dim=256):
         super(MLP, self).__init__()
         self.num_layers = n_layers
-        self.use_fourier = use_fourier
+        if fourier_dim is None:
+            self.use_fourier = True
+        else:
+            self.use_fourier = False
         if self.use_fourier:
             dim_in = fourier_dim * 2
         layers = []
