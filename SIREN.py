@@ -13,6 +13,14 @@ def postprocess(t):
     return torch.clamp((t + 1) / 2, min=0, max=1)
 
 
+class Sine(nn.Module):
+    def __init__(self):
+        super(Sine, self).__init__()
+
+    def forward(self, x):
+        return torch.sin(x)
+
+
 class InputMapping:
 # class InputMapping(nn.Module):
     def __init__(self, mapping_size=256, dim=2, B='gaussian', sigma=10):
@@ -54,7 +62,7 @@ def uniform_coordinates_3d(h, w, t, _range=(-1, 1), flatten=True):
 
 
 class Siren(nn.Module):
-    def __init__(self, dim_in, dim_out, w0=1., c=6., is_first=False):
+    def __init__(self, dim_in, dim_out, w0=1., c=6., is_first=False, use_skip=False):
         super(Siren, self).__init__()
         self.dim_in = dim_in
         self.dim_out = dim_out
@@ -64,6 +72,10 @@ class Siren(nn.Module):
         self.w0 = w0
         self.c = c
         self.is_first = is_first
+        if use_skip and dim_in == dim_out:
+            self.skip = True
+        else:
+            self.skip = False
 
     def init_wb(self, c, w0):
         self.fc = nn.Linear(self.dim_in, self.dim_out)
@@ -74,9 +86,12 @@ class Siren(nn.Module):
         self.fc.bias.data.uniform_(-w_std, w_std)
 
     def forward(self, x):
+        res = x
         out = self.fc(x)
         if self.is_first:
             out = self.w0 * out
+        if self.skip:
+            out = out + res
         out = torch.sin(out)
         return out
 
@@ -141,19 +156,27 @@ class MLP(nn.Module):
         if self.use_fourier:
             dim_in = fourier_dim * 2
         layers = []
+        self.act = nn.ReLU()
         for i in range(self.num_layers):
             if i == 0:
                 layers.append(nn.Linear(dim_in, dim_hidden))
-                layers.append(nn.ReLU())
+                layers.append(self.act)
             elif i == self.num_layers - 1:
                 layers.append(nn.Linear(dim_hidden, dim_out))
             else:
                 layers.append(nn.Linear(dim_hidden, dim_hidden))
-                layers.append(nn.ReLU())
+                layers.append(self.act)
 
         self.layers = nn.Sequential(*layers)
 
     def forward(self, x, out_size=None):
+        # for i in range(self.num_layers - 1):
+        #     res = x
+        #     x = self.layers[i](x)
+        #     x = res + x
+        #     x = self.act(x)
+        # out = self.layers[self.num_layers - 1](x)
+
         out = self.layers(x)
 
         if out_size is not None:
