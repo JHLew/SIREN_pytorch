@@ -21,20 +21,19 @@ class Sine(nn.Module):
         return torch.sin(x)
 
 
-class InputMapping:
-# class InputMapping(nn.Module):
-    def __init__(self, mapping_size=256, dim=2, B='gaussian', sigma=10):
-        # super(InputMapping, self).__init__()
+class InputMapping(nn.Module):
+    def __init__(self, mapping_size=256, dim=2, B='gaussian', sigma=10, train=False):
+        super(InputMapping, self).__init__()
         if B == 'gaussian':
             self.B = torch.randn((dim, mapping_size)) * sigma
         elif B == 'uniform':
             self.B = torch.rand((dim, mapping_size)) * sigma
         else:
             raise ValueError('wrong B type. Got {}'.format(B))
-        # self.B = nn.Parameter(self.B)
+        if train:
+            self.B = nn.Parameter(self.B)
 
-    def map(self, x):
-    # def forward(self, x):
+    def forward(self, x):
         x_proj = torch.mm((2 * np.pi * x), self.B)
         return torch.cat([torch.sin(x_proj), torch.cos(x_proj)], dim=-1)
 
@@ -146,7 +145,7 @@ class SirenNet(nn.Module):
 
 
 class MLP(nn.Module):
-    def __init__(self, dim_in, dim_hidden, dim_out, n_layers, fourier_dim=256):
+    def __init__(self, dim_in, dim_hidden, dim_out, n_layers, fourier_dim=256, B='gaussian', sigma=10):
         super(MLP, self).__init__()
         self.num_layers = n_layers
         if fourier_dim is None:
@@ -154,7 +153,16 @@ class MLP(nn.Module):
         else:
             self.use_fourier = True
         if self.use_fourier:
+            if B == 'gaussian':
+                self.B = torch.randn((dim_in, fourier_dim)) * sigma
+            elif B == 'uniform':
+                self.B = torch.rand((dim_in, fourier_dim)) * sigma
+            else:
+                raise ValueError('wrong B type. Got {}'.format(B))
+            self.B = nn.Parameter(self.B)
+            self.B.requires_grad = False
             dim_in = fourier_dim * 2
+
         layers = []
         self.act = nn.ReLU()
         for i in range(self.num_layers):
@@ -169,6 +177,10 @@ class MLP(nn.Module):
 
         self.layers = nn.Sequential(*layers)
 
+    def map_ff(self, x):
+        x_proj = torch.mm((2 * np.pi * x), self.B)
+        return torch.cat([torch.sin(x_proj), torch.cos(x_proj)], dim=-1)
+
     def forward(self, x, out_size=None):
         # for i in range(self.num_layers - 1):
         #     res = x
@@ -177,6 +189,8 @@ class MLP(nn.Module):
         #     x = self.act(x)
         # out = self.layers[self.num_layers - 1](x)
 
+        if self.use_fourier:
+            x = self.map_ff(x)
         out = self.layers(x)
 
         if out_size is not None:
